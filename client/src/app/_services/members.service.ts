@@ -65,7 +65,6 @@ export class MembersService {
       .reduce((arr,elem)=> arr.concat(elem.result), [])
       .find((member:Member)=> member.userName === username);
       if(member) return of(member);
-    console.log(member);
     return this.http.get<Member>(this.baseUrl+'users/'+username);
   }
   updateMember(member:Member){

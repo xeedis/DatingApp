@@ -27,6 +27,7 @@ export class PhotoEditorComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeUploader();
+    console.log(this.member.photos);
   }
 
   fileOverBase(e:any){

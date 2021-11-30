@@ -49,7 +49,8 @@ namespace API.Controllers
         [HttpGet("{username}", Name ="GetUser")]
         public async Task<ActionResult<MemberDto>> GetUser(string username)
         {
-            return await _unitOfWork.UserRepository.GetMemberAsync(username); 
+            var currentUser = User.GetUsername();
+            return await _unitOfWork.UserRepository.GetMemberAsync(username,isCurrentUser:currentUser==username); 
         }
         [HttpPut]
         public async Task<ActionResult> UpdateUser(MemberUpdateDto memberUpdateDto)
@@ -78,14 +79,11 @@ namespace API.Controllers
                 Url = result.SecureUrl.AbsoluteUri,
                 PublicId = result.PublicId
             };
-            if(user.Photos.Count == 0)
-            {
-                photo.IsMain = true;
-            }
+            
             user.Photos.Add(photo);
             if(await _unitOfWork.Complete())
             {
-                return CreatedAtRoute("GetUser", new {username=user.UserName} ,_mapper.Map<PhotoDto>(photo));
+                return CreatedAtRoute("GetUser", new { username = user.UserName },_mapper.Map<PhotoDto>(photo));
             }
             return BadRequest("Problem with adding photo");
         }
@@ -96,16 +94,18 @@ namespace API.Controllers
             var user = await _unitOfWork.UserRepository.GetUserByUsernameAsync(User.GetUsername());
 
             var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
+            var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
+
+            if (photo == null) return BadRequest("Selected photo doesn`t exists");
 
             if (photo.IsMain) return BadRequest("This is already your main photo");
-
-            var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
-            if (currentMain != null) currentMain.IsMain = false;
             photo.IsMain = true;
+
+            if (currentMain != null && currentMain!=photo) currentMain.IsMain = false;
 
             if (await _unitOfWork.Complete()) return NoContent();
 
-            return BadRequest("Failed to setmain photo");
+            return BadRequest("Failed to set main photo");
         }
 
         [HttpDelete("delete-photo/{photoId}")]
