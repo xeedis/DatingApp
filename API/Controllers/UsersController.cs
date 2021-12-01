@@ -94,14 +94,14 @@ namespace API.Controllers
             var user = await _unitOfWork.UserRepository.GetUserByUsernameAsync(User.GetUsername());
 
             var photo = user.Photos.FirstOrDefault(x => x.Id == photoId);
-            var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
+            
 
             if (photo == null) return BadRequest("Selected photo doesn`t exists");
 
             if (photo.IsMain) return BadRequest("This is already your main photo");
             photo.IsMain = true;
-
-            if (currentMain != null && currentMain!=photo) currentMain.IsMain = false;
+            var currentMain = user.Photos.FirstOrDefault(x => x.IsMain);
+            if (currentMain != null) currentMain.IsMain = false;
 
             if (await _unitOfWork.Complete()) return NoContent();
 
